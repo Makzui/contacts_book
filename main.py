@@ -13,23 +13,25 @@ class ContactBot:
         try:
             name, phone = data.split()
             record = Record(name)
-            record.add_phone(phone)
+            record.add_phone(Phone(phone))
             self.address_book.add_record(record)
             return f"Contact {name} added with phone {phone}"
         except ValueError:
-            raise ValueError("Invalid data format. Please provide both name and phone.")
-
+            return "Invalid data format. Please provide both name and phone."
+        
     def change(self, data):
         try:
             name, phone = data.split()
             record = self.address_book.find(name)
             if record:
-                record.add_phone(phone)
+                record.phones.clear()  
+                record.add_phone(phone)  
                 return f"Phone number updated for {name}"
             else:
-                raise IndexError("Contact not found")
+                return "Contact not found"
         except ValueError:
-            raise ValueError("Invalid data format. Please provide both name and phone.")
+            return "Invalid data format. Please provide both name and phone."
+
 
     def phone(self, name):
         record = self.address_book.find(name)
@@ -51,14 +53,14 @@ class ContactBot:
             else:
                 return f"Contact with name {name} does not exist."
         except ValueError:
-            raise ValueError("Invalid data format. Please provide both name and birthday.")
+            return "Invalid data format. Please provide both name and birthday."
 
     def delete(self, name):
         self.address_book.delete(name)
         return f"Contact {name} deleted"
 
     def search(self, name):
-        found_records = [record for record in self.address_book.data.values() if name.lower() in record.name.value.lower()]
+        found_records = [record for record in self.address_book.data.values() if name.lower() in record.name.value.lower() or any(name.lower() in phone.lower() for phone in record.phones)]
         if found_records:
             return "\n".join(str(record) for record in found_records)
         else:
@@ -68,36 +70,38 @@ class ContactBot:
         while True:
             user_input = input("Enter command: ").lower()
             if user_input in ["good bye", "close", "exit", "."]:
-                print("Good bye!")
+                result = "Good bye!"
                 self.address_book.save_to_json()
-                break
+                return result
             elif user_input.startswith("add_birthday"):
                 data = user_input[len("add_birthday")+1:]
-                print(self.add_birthday(data))
+                return self.add_birthday(data)
             elif user_input == "hello":
-                print(self.hello())
+                return self.hello()
             elif user_input.startswith("add"):
                 data = user_input[4:]
-                print(self.add(data))
+                return self.add(data)
             elif user_input.startswith("change"):
                 data = user_input[7:]
-                print(self.change(data))
+                return self.change(data)
             elif user_input.startswith("phone"):
                 name = user_input[6:]
-                print(self.phone(name))
+                return self.phone(name)
             elif user_input == "show all":
-                print(self.show_all())
+                return self.show_all()
             elif user_input.startswith("delete"):
                 name = user_input[7:]
-                print(self.delete(name))
+                return self.delete(name)
             elif user_input.startswith("search"):
                 name = user_input.split(" ", 1)[1]
-                print(self.search(name))
+                return self.search(name)
             else:
-                print("Invalid command. Try again.")
+                return "Invalid command. Try again."
 
 
 if __name__ == "__main__":
     address_book = AddressBook("address_book.json")
     bot = ContactBot(address_book)
-    bot.main()
+    while True:
+        print(bot.main())
+
