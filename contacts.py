@@ -1,7 +1,6 @@
 from datetime import datetime
 from collections import UserDict
 import json
-import re
 
 class Field:
     def __init__(self, value):
@@ -32,13 +31,11 @@ class Name(Field):
 
 class Phone(Field):
     def is_valid(self, value):
-        return bool(re.match(r'^\d{10}$', value))  
+        return len(value) == 10 and value.isdigit()
 
     def __init__(self, value):
         super().__init__(value)
 
-    def __str__(self):
-        return self.value  
 
 
 class Birthday(Field):
@@ -54,8 +51,8 @@ class Birthday(Field):
             except ValueError:
                 raise ValueError
 
-    def __str__(self):
-        return str(self.value) if self.value else ""  
+    #def __str__(self):
+        #return str(self.value) if self.value else ""  
 
 
 class Record:
@@ -88,7 +85,8 @@ class Record:
         return delta.days
 
     def __str__(self):
-        return f"Contact name: {self.name.value}, phones: {'; '.join(self.phones)}"
+        birthday_info = f", Birthday: {self.birthday}" if self.birthday.value else ""
+        return f"Contact name: {self.name.value}, phones: {'; '.join(self.phones)}{birthday_info}"
 
 
 class AddressBook(UserDict):
@@ -129,7 +127,7 @@ class AddressBook(UserDict):
             with open(self.filename, "r") as fh:
                 data = json.load(fh)
                 if not data:
-                    print("The JSON file is empty.")
+                    return("The JSON file is empty.")
                 else:
                     self.data.clear()
                     for item in data:
@@ -139,4 +137,4 @@ class AddressBook(UserDict):
                         record.birthday = Birthday(item['birthday'])
                         self.add_record(record)
         except FileNotFoundError:
-            print("File not found. Creating a new address book.")
+            return("File not found. Creating a new address book.")
